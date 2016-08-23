@@ -1,10 +1,20 @@
 package main
 
-import "github.com/jmoiron/sqlx"
+import (
+	"io"
+	"encoding/json"
+	
+	"github.com/jmoiron/sqlx"
+	"github.com/pborman/uuid"
+)
 
 type resource struct {
 	ID   string
 	Name string
+}
+
+type createRequest struct {
+	Name string `json:"name"`
 }
 
 type response struct {
@@ -22,6 +32,23 @@ func getResources(db *sqlx.DB, params map[string]string) response {
 		response.Err = err.Error()
 	}
 
+	return response
+}
+
+func createResource(db *sqlx.DB, params map[string]string, body io.ReadCloser) response {
+	createReq := createRequest{}	
+	if err := json.NewDecoder(body).Decode(&createReq); err != nil {
+		return response{Err: err.Error()}
+	}
+
+	resource := resource{uuid.New(), createReq.Name}
+	response := response{V: resource}
+
+	_, err := db.Exec("INSERT INTO resource (ID, Name) VALUES (?, ?)", resource.ID, resource.Name)
+	if err != nil {
+		response.Err = err.Error()
+	}
+	
 	return response
 }
 

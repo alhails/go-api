@@ -1,18 +1,29 @@
 package main
 
 import (
+	"io"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 )
 
-type handler struct {
+type getHandler struct {
 	srv func(*sqlx.DB, map[string]string) response
 	db  *sqlx.DB
 }
 
-func (h handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+type postHandler struct {
+	srv func(*sqlx.DB, map[string]string, io.ReadCloser) response
+	db  *sqlx.DB
+}
+
+func (h getHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	params := mux.Vars(req)
 	h.srv(h.db, params).AsJSON(w)
+}
+
+func (h postHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	params := mux.Vars(req)
+	h.srv(h.db, params, req.Body).AsJSON(w)
 }

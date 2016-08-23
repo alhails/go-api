@@ -15,8 +15,9 @@ func main() {
 
 	router := mux.NewRouter()
 
-	router.Handle("/resources", handler{getResources, db})
-	router.Handle("/resources/{resourceId}", handler{getResource, db})
+	router.Handle("/resources", getHandler{getResources, db}).Methods("GET")
+	router.Handle("/resources/{resourceId}", getHandler{getResource, db}).Methods("GET")
+	router.Handle("/resources", postHandler{createResource, db}).Methods("POST")
 
 	http.Handle("/", router)
 	log.Fatal(http.ListenAndServe(":8080", nil))
