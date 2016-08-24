@@ -5,6 +5,10 @@ import (
 	"net/http"
 )
 
+type jsonDecoder interface {
+	Decode(v interface{}) error
+}
+
 func (resp response) AsJSON(w http.ResponseWriter) {
 	writeJSON(w, resp)
 }
@@ -12,11 +16,9 @@ func (resp response) AsJSON(w http.ResponseWriter) {
 func writeJSON(w http.ResponseWriter, v response) {
 	w.Header().Set("Content-Type", "application/json")
 
-	if v.Err == "" {
-		w.WriteHeader(http.StatusOK)
-	} else {
-		w.WriteHeader(http.StatusInternalServerError)
+	if v.status > 0 {
+		w.WriteHeader(v.status)
 	}
 
-	json.NewEncoder(w).Encode(v)
+	json.NewEncoder(w).Encode(v.data)
 }

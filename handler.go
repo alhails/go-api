@@ -1,7 +1,7 @@
 package main
 
 import (
-	"io"
+	"encoding/json"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -14,7 +14,7 @@ type getHandler struct {
 }
 
 type postHandler struct {
-	srv func(*sqlx.DB, map[string]string, io.ReadCloser) response
+	srv func(*sqlx.DB, map[string]string, jsonDecoder) response
 	db  *sqlx.DB
 }
 
@@ -25,5 +25,5 @@ func (h getHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 func (h postHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	params := mux.Vars(req)
-	h.srv(h.db, params, req.Body).AsJSON(w)
+	h.srv(h.db, params, json.NewDecoder(req.Body)).AsJSON(w)
 }
