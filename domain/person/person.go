@@ -1,28 +1,29 @@
-package main
+package person
 
 import (
 	"errors"
 	"time"
 
+	"github.com/alhails/go-api/domain"
 	"github.com/pborman/uuid"
 )
 
-// PersonCreated represents the creation of a Person entity
-type PersonCreated struct {
-	firstName string
-	lastName  string
+// Created represents the creation of a Person entity
+type Created struct {
+	FirstName string
+	LastName  string
 }
 
-// PersonUpdated represents the update of a Person's name
-type PersonUpdated struct {
-	firstName   string
-	lastName    string
-	dateOfBirth *time.Time
+// Updated represents the update of a Person's name
+type Updated struct {
+	FirstName   string
+	LastName    string
+	DateOfBirth *time.Time
 }
 
 // Person is the domain object for a Person entity
 type Person struct {
-	Aggregate
+	domain.Aggregate
 	id          uuid.UUID
 	firstName   string
 	lastName    string
@@ -32,20 +33,20 @@ type Person struct {
 // NewPerson constructs a new empty Person entity
 func NewPerson() *Person {
 	p := &Person{}
-	p.applyChange = p.apply
+	p.ApplyChange = p.apply
 	return p
 }
 
 func (p *Person) apply(event interface{}) {
 	switch e := event.(type) {
-	case PersonCreated:
+	case Created:
 		p.id = uuid.NewUUID()
-		p.firstName = e.firstName
-		p.lastName = e.lastName
-	case PersonUpdated:
-		p.firstName = e.firstName
-		p.lastName = e.lastName
-		p.dateOfBirth = e.dateOfBirth
+		p.firstName = e.FirstName
+		p.lastName = e.LastName
+	case Updated:
+		p.firstName = e.FirstName
+		p.lastName = e.LastName
+		p.dateOfBirth = e.DateOfBirth
 	}
 }
 
@@ -67,25 +68,18 @@ func (p *Person) Create(firstName string, lastName string) error {
 		return err
 	}
 
-	e := PersonCreated{firstName, lastName}
+	e := Created{firstName, lastName}
 	p.Apply(e, true)
 	return nil
 }
 
+// Update updates a Person entity
 func (p *Person) Update(firstName string, lastName string, dateOfBirth *time.Time) error {
 	err := p.validateName(firstName, lastName)
 	if err != nil {
 		return err
 	}
-	e := PersonUpdated{firstName, lastName, dateOfBirth}
+	e := Updated{firstName, lastName, dateOfBirth}
 	p.Apply(e, true)
 	return nil
-}
-
-func (p *Person) GetAge() (int, error) {
-	if p.dateOfBirth == nil {
-		return 0, errors.New("Date of birth is not set")
-	}
-	hours := int(time.Since(*p.dateOfBirth).Hours())
-	return (24 * 365) / hours, nil
 }
